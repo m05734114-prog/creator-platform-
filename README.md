@@ -1,1 +1,888 @@
-# creator-platform-
+# creator-platform-<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CreatorSpace</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f1a; --surface: #1a1a2e; --surface2: #252540; --border: #2d2d4f;
+    --text: #e2e8f0; --muted: #64748b; --subtle: #94a3b8;
+    --accent: #6366f1; --accent2: #a855f7; --danger: #ef4444; --success: #10b981;
+    --grad: linear-gradient(135deg, #6366f1, #a855f7);
+    --sidebar: 240px; --header: 58px;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; }
+  button { cursor: pointer; font-family: inherit; }
+  input, textarea { font-family: inherit; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  a { color: inherit; text-decoration: none; }
+
+  /* ── Layout ── */
+  #app { display: flex; height: 100vh; overflow: hidden; }
+  #sidebar { width: var(--sidebar); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; padding: 0; }
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #header { height: var(--header); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0; }
+  #content { flex: 1; overflow-y: auto; display: flex; }
+  .col-center { flex: 1; max-width: 640px; border-right: 1px solid var(--border); overflow-y: auto; }
+  .col-right { width: 300px; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── Sidebar ── */
+  .sidebar-logo { padding: 20px 18px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+  .logo-mark { width: 36px; height: 36px; border-radius: 10px; background: var(--grad); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .logo-text { font-weight: 800; font-size: 16px; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .nav-list { padding: 10px 10px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: none; background: transparent; color: var(--muted); width: 100%; text-align: left; font-size: 14px; font-weight: 500; transition: background .15s, color .15s; position: relative; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(99,102,241,.15); color: var(--accent); font-weight: 700; }
+  .nav-badge { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: var(--danger); color: #fff; border-radius: 99px; font-size: 10px; font-weight: 700; padding: 1px 6px; min-width: 18px; text-align: center; }
+  .sidebar-user { padding: 14px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .sidebar-user-info { flex: 1; min-width: 0; }
+  .sidebar-user-info .name { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sidebar-user-info .role { font-size: 11px; color: var(--muted); }
+  .btn-icon { background: none; border: none; color: var(--muted); padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: color .15s, background .15s; }
+  .btn-icon:hover { color: var(--danger); background: rgba(239,68,68,.1); }
+
+  /* ── Auth ── */
+  #auth-screen { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 30% 20%, rgba(99,102,241,.15) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(168,85,247,.1) 0%, transparent 60%), var(--bg); }
+  .auth-card { width: 100%; max-width: 400px; padding: 40px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+  .auth-logo { text-align: center; margin-bottom: 32px; }
+  .auth-logo .mark { width: 56px; height: 56px; border-radius: 16px; background: var(--grad); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+  .auth-logo h1 { font-size: 26px; font-weight: 800; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .auth-logo p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--subtle); margin-bottom: 6px; }
+  .form-input { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; outline: none; transition: border-color .15s; }
+  .form-input:focus { border-color: var(--accent); }
+  .btn { padding: 12px 20px; border-radius: 10px; border: none; font-size: 14px; font-weight: 700; transition: opacity .15s, transform .1s; }
+  .btn:active { transform: scale(.98); }
+  .btn-primary { background: var(--grad); color: #fff; }
+  .btn-primary:hover { opacity: .9; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-outline:hover { background: var(--surface2); }
+  .btn-full { width: 100%; }
+  .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 8px; }
+  .btn-danger { background: transparent; border: 1px solid rgba(239,68,68,.4); color: var(--danger); }
+  .btn-danger:hover { background: rgba(239,68,68,.1); }
+  .err { color: var(--danger); font-size: 12px; margin-top: 8px; }
+  .auth-switch { text-align: center; color: var(--muted); font-size: 13px; margin-top: 16px; }
+  .auth-switch span { color: var(--accent); cursor: pointer; font-weight: 600; }
+  .auth-hint { text-align: center; color: #2d2d4f; font-size: 11px; margin-top: 10px; }
+
+  /* ── Avatar ── */
+  .avatar { border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .av-admin { background: linear-gradient(135deg,#6366f1,#a855f7); }
+  .av-staff1 { background: linear-gradient(135deg,#0ea5e9,#6366f1); }
+  .av-staff2 { background: linear-gradient(135deg,#10b981,#0ea5e9); }
+  .av-user { background: linear-gradient(135deg,#f59e0b,#ef4444); }
+
+  /* ── Feed ── */
+  .creator-banner { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(99,102,241,.08) 0%, transparent 100%); }
+  .creator-banner-inner { display: flex; align-items: center; gap: 16px; }
+  .creator-badge { font-size: 9px; background: var(--grad); border-radius: 99px; padding: 2px 8px; font-weight: 800; color: #fff; letter-spacing: .5px; }
+  .post-card { padding: 20px; border-bottom: 1px solid var(--border); transition: background .15s; }
+  .post-card:hover { background: rgba(255,255,255,.015); }
+  .post-header { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+  .post-body { font-size: 15px; line-height: 1.65; color: #cbd5e1; margin-bottom: 14px; margin-left: 48px; }
+  .post-actions { display: flex; gap: 16px; margin-left: 48px; }
+  .post-action { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--muted); font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; transition: color .15s, background .15s; }
+  .post-action:hover { background: rgba(99,102,241,.1); color: var(--accent); }
+  .post-action.liked { color: var(--danger); }
+  .post-action.liked:hover { background: rgba(239,68,68,.1); }
+
+  /* ── Notifs ── */
+  .notif-item { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); transition: background .15s; }
+  .notif-item.unread { background: rgba(99,102,241,.06); }
+  .notif-icon { width: 38px; height: 38px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+  /* ── DM / Inbox ── */
+  .messages-layout { display: flex; flex: 1; height: 100%; overflow: hidden; }
+  .thread-list { width: 280px; border-right: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; }
+  .thread-item { display: flex; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s; }
+  .thread-item:hover { background: var(--surface2); }
+  .thread-item.active { background: rgba(99,102,241,.1); }
+  .thread-item.unread { background: rgba(99,102,241,.05); }
+  .chat-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .chat-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-shrink: 0; background: var(--surface); }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .msg-row { display: flex; gap: 8px; align-items: flex-end; }
+  .msg-row.me { flex-direction: row-reverse; }
+  .bubble { max-width: 68%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.5; }
+  .bubble.them { background: var(--surface2); border-bottom-left-radius: 4px; }
+  .bubble.me { background: var(--grad); border-bottom-right-radius: 4px; color: #fff; }
+  .bubble-name { font-size: 11px; font-weight: 700; color: #a78bfa; margin-bottom: 3px; }
+  .bubble-name.staff { color: #38bdf8; }
+  .bubble-time { font-size: 10px; color: var(--muted); margin-top: 3px; text-align: right; }
+  .chat-input-bar { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center; flex-shrink: 0; background: var(--surface); }
+  .chat-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 99px; padding: 10px 18px; color: var(--text); font-size: 14px; outline: none; transition: border-color .15s; }
+  .chat-input:focus { border-color: var(--accent); }
+  .btn-send { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--grad); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .empty-chat { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--muted); flex-direction: column; gap: 8px; }
+
+  /* ── Profile ── */
+  .profile-cover { height: 160px; background: linear-gradient(135deg,#1e1b4b,#2d1b4e,#0f172a); position: relative; }
+  .profile-avatar-wrap { position: absolute; bottom: -40px; left: 28px; border: 4px solid var(--bg); border-radius: 50%; }
+  .profile-info { padding: 52px 28px 24px; border-bottom: 1px solid var(--border); }
+  .profile-stats { display: flex; gap: 32px; margin-top: 16px; }
+  .stat { text-align: left; }
+  .stat-val { font-size: 20px; font-weight: 800; }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .profile-card { margin: 16px 20px; background: var(--surface2); border-radius: 14px; padding: 14px 16px; border: 1px solid var(--border); font-size: 13px; color: var(--subtle); line-height: 1.6; }
+
+  /* ── Right column widgets ── */
+  .widget { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .widget h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+
+  /* ── Compose modal ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+  .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px; width: 100%; max-width: 520px; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .modal-title { font-size: 17px; font-weight: 800; }
+  .compose-area { display: flex; gap: 12px; }
+  .compose-textarea { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: var(--text); font-size: 15px; resize: none; outline: none; min-height: 100px; transition: border-color .15s; }
+  .compose-textarea:focus { border-color: var(--accent); }
+
+  /* ── Misc ── */
+  .page-header { padding: 18px 20px; border-bottom: 1px solid var(--border); }
+  .page-header h2 { font-size: 18px; font-weight: 800; }
+  .tag { font-size: 10px; border-radius: 99px; padding: 2px 8px; font-weight: 700; }
+  .tag-admin { background: rgba(99,102,241,.2); color: #818cf8; }
+  .tag-staff { background: rgba(14,165,233,.2); color: #38bdf8; }
+  .tag-user { background: rgba(16,185,129,.2); color: #34d399; }
+  .inbox-badge { background: var(--danger); color: #fff; border-radius: 99px; font-size: 10px; font-weight: 700; padding: 1px 6px; }
+  .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) { .col-right { display: none; } }
+  @media (max-width: 680px) {
+    #sidebar { display: none; }
+    #mobile-nav { display: flex; }
+    #app { flex-direction: column; }
+    #main { height: calc(100vh - 58px); }
+    .thread-list { width: 220px; }
+  }
+  #mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: 58px; background: var(--surface); border-top: 1px solid var(--border); z-index: 100; align-items: center; justify-content: space-around; }
+  .mob-nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; color: var(--muted); font-size: 10px; padding: 6px 2px; position: relative; }
+  .mob-nav-btn.active { color: var(--accent); }
+  .mob-badge { position: absolute; top: 4px; right: 50%; transform: translateX(10px); background: var(--danger); color: #fff; border-radius: 99px; font-size: 9px; font-weight: 700; padding: 1px 4px; min-width: 14px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="mark">✦</div>
+      <h1>CreatorSpace</h1>
+      <p>Your exclusive creator platform</p>
+    </div>
+    <div id="auth-form"></div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">✦</div>
+      <span class="logo-text">CreatorSpace</span>
+    </div>
+    <nav class="nav-list" id="nav-list"></nav>
+    <div class="sidebar-user" id="sidebar-user"></div>
+  </aside>
+
+  <div id="main">
+    <header id="header"></header>
+    <div id="content"></div>
+  </div>
+</div>
+
+<!-- Mobile nav -->
+<nav id="mobile-nav"></nav>
+
+<!-- Modal root -->
+<div id="modal-root"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// Storage
+// ════════════════════════════════════════════════════════════════════════════
+const storage = {
+  get: async (k) => { try { const r = await window.storage.get(k); return r ? JSON.parse(r.value) : null; } catch { return null; } },
+  set: async (k, v) => { try { await window.storage.set(k, JSON.stringify(v)); } catch {} }
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// State
+// ════════════════════════════════════════════════════════════════════════════
+let S = {
+  users: {
+    admin: { id:"admin", username:"creator", displayName:"Alex Creator", bio:"Making content you love ✨", avatar:"AC", role:"admin", password:"admin123", followers:[], following:[] },
+    staff1: { id:"staff1", username:"staff_jordan", displayName:"Jordan (Staff)", avatar:"JO", role:"staff", password:"staff123", followers:[], following:[] },
+    staff2: { id:"staff2", username:"staff_riley", displayName:"Riley (Staff)", avatar:"RI", role:"staff", password:"staff456", followers:[], following:[] },
+  },
+  posts: [
+    { id:"p1", authorId:"admin", content:"Welcome to my platform! 🎉 So excited to share my journey with you all. This is going to be an incredible ride.", likes:[], createdAt: Date.now()-86400000*2 },
+    { id:"p2", authorId:"admin", content:"Just finished recording a brand new tutorial! Drop a 🔥 in the comments if you want early access.", likes:[], createdAt: Date.now()-3600000*5 },
+  ],
+  notifications: {},
+  conversations: {},
+  inbox: []
+};
+let currentUser = null;
+let currentTab = "home";
+let saveTimer = null;
+
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => storage.set("cs-state-v2", S), 400);
+}
+
+async function loadState() {
+  const saved = await storage.get("cs-state-v2");
+  if (saved) {
+    S = { ...S, ...saved };
+    // ensure seed staff exist
+    if (!S.users.staff1) S.users.staff1 = { id:"staff1", username:"staff_jordan", displayName:"Jordan (Staff)", avatar:"JO", role:"staff", password:"staff123", followers:[], following:[] };
+    if (!S.users.staff2) S.users.staff2 = { id:"staff2", username:"staff_riley", displayName:"Riley (Staff)", avatar:"RI", role:"staff", password:"staff456", followers:[], following:[] };
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Utils
+// ════════════════════════════════════════════════════════════════════════════
+const timeAgo = ts => {
+  const s = (Date.now()-ts)/1000;
+  if (s<60) return "just now";
+  if (s<3600) return `${Math.floor(s/60)}m ago`;
+  if (s<86400) return `${Math.floor(s/3600)}h ago`;
+  return `${Math.floor(s/86400)}d ago`;
+};
+
+const svgs = {
+  home:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+  bell:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>`,
+  msg:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>`,
+  inbox:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>`,
+  user:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  logout:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+  plus:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  heart:`<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>`,
+  heartFill:`<svg width="17" height="17" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>`,
+  send:`<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
+  x:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+  back:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
+};
+
+function avatarClass(u) {
+  if (!u) return "av-user";
+  if (u.role==="admin") return "av-admin";
+  if (u.role==="staff") return u.id==="staff1" ? "av-staff1" : "av-staff2";
+  return "av-user";
+}
+
+function avatarEl(user, size=40) {
+  const d = document.createElement("div");
+  d.className = `avatar ${avatarClass(user)}`;
+  d.style.cssText = `width:${size}px;height:${size}px;font-size:${size*.34}px`;
+  d.textContent = user?.avatar || "?";
+  return d;
+}
+
+function addNotif(userId, notif) {
+  if (!S.notifications[userId]) S.notifications[userId] = {};
+  const id = `n${Date.now()}${Math.random()}`;
+  S.notifications[userId][id] = { ...notif, id, read: false, createdAt: Date.now() };
+  save();
+}
+
+function unreadNotifsCount() {
+  return Object.values(S.notifications[currentUser.id]||{}).filter(n=>!n.read).length;
+}
+
+function unreadMsgsCount() {
+  if (currentUser.role !== "user") return 0;
+  return Object.values(S.conversations[currentUser.id]||{}).filter(m=>!m.read && m.fromId!==currentUser.id).length;
+}
+
+function unreadInboxCount() {
+  if (currentUser.role==="user") return 0;
+  return S.inbox.filter(m=>!m.replied).length;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Auth
+// ════════════════════════════════════════════════════════════════════════════
+let authMode = "login";
+
+function renderAuth() {
+  const f = document.getElementById("auth-form");
+  f.innerHTML = `
+    <h2 style="font-size:17px;font-weight:700;margin-bottom:18px">${authMode==="login"?"Welcome back":"Create account"}</h2>
+    ${authMode==="register"?`<div class="form-group"><label>Display Name</label><input class="form-input" id="a-name" placeholder="Your name" /></div>`:""}
+    <div class="form-group"><label>Username</label><input class="form-input" id="a-user" placeholder="username" /></div>
+    <div class="form-group"><label>Password</label><input class="form-input" id="a-pass" type="password" placeholder="••••••••" /></div>
+    <div id="a-err" class="err"></div>
+    <button class="btn btn-primary btn-full" style="margin-top:8px" id="a-submit">${authMode==="login"?"Sign In":"Create Account"}</button>
+    <p class="auth-switch">${authMode==="login"?"No account? ":"Have an account? "}<span id="a-toggle">${authMode==="login"?"Sign up":"Sign in"}</span></p>
+    ${authMode==="login"?`<p class="auth-hint">Admin: creator / admin123 · Staff: staff_jordan / staff123</p>`:""}
+  `;
+  document.getElementById("a-submit").onclick = doAuth;
+  document.getElementById("a-toggle").onclick = () => { authMode = authMode==="login"?"register":"login"; renderAuth(); };
+  const inputs = f.querySelectorAll(".form-input");
+  inputs.forEach(i => i.addEventListener("keydown", e => e.key==="Enter" && doAuth()));
+}
+
+function doAuth() {
+  const uname = document.getElementById("a-user")?.value.trim();
+  const pass  = document.getElementById("a-pass")?.value;
+  const name  = document.getElementById("a-name")?.value.trim();
+  const err   = document.getElementById("a-err");
+  if (authMode==="login") {
+    const u = Object.values(S.users).find(u=>u.username===uname && u.password===pass);
+    if (!u) { err.textContent="Invalid username or password"; return; }
+    login(u);
+  } else {
+    if (!uname||!pass||!name) { err.textContent="All fields required"; return; }
+    if (Object.values(S.users).find(u=>u.username===uname)) { err.textContent="Username taken"; return; }
+    const id = `u${Date.now()}`;
+    const initials = name.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+    const u = { id, username:uname, displayName:name, bio:"", avatar:initials, role:"user", password:pass, followers:[], following:["admin"] };
+    S.users[id] = u;
+    if (!S.users.admin.followers.includes(id)) S.users.admin.followers.push(id);
+    save();
+    login(u);
+  }
+}
+
+function login(u) {
+  currentUser = u;
+  document.getElementById("auth-screen").style.display="none";
+  document.getElementById("app").style.display="flex";
+  renderShell();
+  navigate("home");
+}
+
+function logout() {
+  currentUser = null;
+  currentTab = "home";
+  document.getElementById("auth-screen").style.display="flex";
+  document.getElementById("app").style.display="none";
+  authMode = "login";
+  renderAuth();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Shell
+// ════════════════════════════════════════════════════════════════════════════
+function renderShell() {
+  renderSidebar();
+  renderMobileNav();
+}
+
+function renderSidebar() {
+  const isStaff = currentUser.role!=="user";
+  const tabs = [
+    { id:"home", icon:"home", label:"Home" },
+    { id:"notifications", icon:"bell", label:"Notifications", badge: unreadNotifsCount() },
+    { id:"messages", icon:"msg", label:"Messages", badge: currentUser.role==="user" ? unreadMsgsCount() : 0 },
+    ...(isStaff ? [{ id:"inbox", icon:"inbox", label:"Shared Inbox", badge: unreadInboxCount() }] : []),
+    { id:"profile", icon:"user", label:"Profile" },
+  ];
+  const nav = document.getElementById("nav-list");
+  nav.innerHTML = tabs.map(t=>`
+    <button class="nav-item ${currentTab===t.id?"active":""}" data-tab="${t.id}">
+      ${svgs[t.icon]} ${t.label}
+      ${t.badge>0?`<span class="nav-badge">${t.badge}</span>`:""}
+    </button>
+  `).join("");
+  nav.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>navigate(b.dataset.tab));
+
+  const su = document.getElementById("sidebar-user");
+  su.innerHTML = "";
+  su.appendChild(avatarEl(currentUser,34));
+  const info = document.createElement("div");
+  info.className = "sidebar-user-info";
+  info.innerHTML = `<div class="name">${currentUser.displayName}</div><div class="role">${currentUser.role}</div>`;
+  su.appendChild(info);
+  const lb = document.createElement("button");
+  lb.className = "btn-icon"; lb.title="Sign out"; lb.innerHTML = svgs.logout;
+  lb.onclick = logout;
+  su.appendChild(lb);
+}
+
+function renderMobileNav() {
+  const isStaff = currentUser.role!=="user";
+  const tabs = [
+    { id:"home", icon:"home", label:"Home" },
+    { id:"notifications", icon:"bell", label:"Alerts", badge: unreadNotifsCount() },
+    { id:"messages", icon:"msg", label:"DMs" },
+    ...(isStaff ? [{ id:"inbox", icon:"inbox", label:"Inbox", badge: unreadInboxCount() }] : []),
+    { id:"profile", icon:"user", label:"Profile" },
+  ];
+  const mn = document.getElementById("mobile-nav");
+  mn.innerHTML = tabs.map(t=>`
+    <button class="mob-nav-btn ${currentTab===t.id?"active":""}" data-tab="${t.id}">
+      ${svgs[t.icon].replace("20","22")}
+      <span>${t.label}</span>
+      ${t.badge>0?`<span class="mob-badge">${t.badge}</span>`:""}
+    </button>
+  `).join("");
+  mn.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>navigate(b.dataset.tab));
+}
+
+function navigate(tab) {
+  currentTab = tab;
+  renderShell();
+  renderHeader();
+  renderContent();
+}
+
+function renderHeader() {
+  const h = document.getElementById("header");
+  const titles = { home:"Feed", notifications:"Notifications", messages:"Messages", inbox:"Shared Inbox", profile:"Profile" };
+  h.innerHTML = `<span style="font-size:17px;font-weight:800">${titles[currentTab]||""}</span>`;
+  if (currentTab==="home" && currentUser.role==="admin") {
+    const b = document.createElement("button");
+    b.className = "btn btn-primary btn-sm"; b.style.marginLeft="auto";
+    b.innerHTML = `${svgs.plus.replace("20","14")} &nbsp;New Post`;
+    b.onclick = openComposeModal;
+    h.appendChild(b);
+  }
+}
+
+function renderContent() {
+  const c = document.getElementById("content");
+  c.innerHTML = "";
+  const center = document.createElement("div");
+  center.className = "col-center";
+  c.appendChild(center);
+
+  if (currentTab==="home")          { renderFeed(center); renderRightCol(c); }
+  else if (currentTab==="notifications") renderNotifications(center);
+  else if (currentTab==="messages")  renderMessages(center);
+  else if (currentTab==="inbox")     renderInbox(c);
+  else if (currentTab==="profile")   renderProfile(center);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Feed
+// ════════════════════════════════════════════════════════════════════════════
+function renderFeed(el) {
+  const admin = S.users.admin;
+  const isUser = currentUser.role==="user";
+  const isFollowing = isUser && (S.users[currentUser.id]?.following||[]).includes("admin");
+
+  const banner = document.createElement("div");
+  banner.className = "creator-banner";
+  const inner = document.createElement("div");
+  inner.className = "creator-banner-inner";
+
+  const avWrap = document.createElement("div");
+  avWrap.style.position="relative";
+  const av = avatarEl(admin, 64);
+  const badge = document.createElement("div");
+  badge.style.cssText="position:absolute;bottom:0;right:0;width:20px;height:20px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:11px;border:3px solid var(--bg)";
+  badge.textContent="✦"; avWrap.append(av,badge); inner.appendChild(avWrap);
+
+  const info = document.createElement("div"); info.style.flex="1";
+  info.innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font-weight:800;font-size:18px">${admin.displayName}</span>
+      <span class="creator-badge">CREATOR</span>
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin:4px 0 6px">${admin.bio}</p>
+    <span style="color:var(--muted);font-size:12px">${(admin.followers||[]).length} followers</span>
+  `;
+  inner.appendChild(info);
+
+  if (isUser) {
+    const fb = document.createElement("button");
+    fb.className = `btn btn-sm ${isFollowing?"btn-outline":"btn-primary"}`;
+    fb.textContent = isFollowing?"Following":"Follow";
+    fb.onclick = () => toggleFollow(fb);
+    inner.appendChild(fb);
+  }
+  banner.appendChild(inner); el.appendChild(banner);
+
+  const posts = [...S.posts].sort((a,b)=>b.createdAt-a.createdAt);
+  if (!posts.length) { const emp=document.createElement("div"); emp.style.cssText="padding:40px;text-align:center;color:var(--muted)"; emp.textContent="No posts yet."; el.appendChild(emp); return; }
+  posts.forEach(p => el.appendChild(makePostCard(p)));
+}
+
+function toggleFollow(btn) {
+  const uid = currentUser.id;
+  const u = S.users[uid]; const a = S.users.admin;
+  const following = (u.following||[]).includes("admin");
+  if (following) {
+    u.following = u.following.filter(x=>x!=="admin");
+    a.followers = a.followers.filter(x=>x!==uid);
+  } else {
+    if (!u.following) u.following=[];
+    if (!a.followers) a.followers=[];
+    u.following.push("admin"); a.followers.push(uid);
+    addNotif("admin",{type:"follow",fromId:uid,text:`${u.displayName} followed you`});
+  }
+  save(); navigate("home");
+}
+
+function makePostCard(post) {
+  const author = S.users[post.authorId];
+  const liked = (post.likes||[]).includes(currentUser.id);
+  const card = document.createElement("div");
+  card.className = "post-card";
+
+  const header = document.createElement("div");
+  header.className = "post-header";
+  header.appendChild(avatarEl(author, 38));
+  const meta = document.createElement("div");
+  meta.innerHTML=`<div style="font-weight:700;font-size:14px">${author?.displayName||"Unknown"}</div><div style="color:var(--muted);font-size:12px">${timeAgo(post.createdAt)}</div>`;
+  header.appendChild(meta); card.appendChild(header);
+
+  const body = document.createElement("p");
+  body.className="post-body"; body.textContent=post.content; card.appendChild(body);
+
+  const actions = document.createElement("div");
+  actions.className="post-actions";
+  const likeBtn = document.createElement("button");
+  likeBtn.className=`post-action ${liked?"liked":""}`;
+  likeBtn.innerHTML=`${liked?svgs.heartFill:svgs.heart} <span>${(post.likes||[]).length}</span>`;
+  likeBtn.onclick=()=>toggleLike(post.id);
+  actions.appendChild(likeBtn); card.appendChild(actions);
+  return card;
+}
+
+function toggleLike(postId) {
+  const idx = S.posts.findIndex(p=>p.id===postId);
+  if (idx===-1) return;
+  const post = {...S.posts[idx]};
+  const liked = (post.likes||[]).includes(currentUser.id);
+  post.likes = liked ? post.likes.filter(x=>x!==currentUser.id) : [...(post.likes||[]), currentUser.id];
+  S.posts[idx] = post;
+  if (!liked && currentUser.id!=="admin") addNotif("admin",{type:"like",fromId:currentUser.id,text:`${currentUser.displayName} liked your post`});
+  save(); navigate("home");
+}
+
+function renderRightCol(container) {
+  const rc = document.createElement("div");
+  rc.className = "col-right";
+
+  // Followers widget
+  const fw = document.createElement("div"); fw.className="widget";
+  fw.innerHTML=`<h3>Community</h3>`;
+  const followers = (S.users.admin.followers||[]).slice(-6).map(id=>S.users[id]).filter(Boolean);
+  if (followers.length) {
+    const grid = document.createElement("div");
+    grid.style.cssText="display:flex;flex-wrap:wrap;gap:8px";
+    followers.forEach(u=>{
+      const wrap = document.createElement("div");
+      wrap.title=u.displayName; wrap.style.cssText="display:flex;flex-direction:column;align-items:center;gap:4px;width:52px";
+      const a=avatarEl(u,36);
+      const n=document.createElement("span"); n.style.cssText="font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center"; n.textContent=u.displayName;
+      wrap.append(a,n); grid.appendChild(wrap);
+    });
+    fw.appendChild(grid);
+    const count = document.createElement("p"); count.style.cssText="font-size:12px;color:var(--muted);margin-top:10px";
+    count.textContent=`${(S.users.admin.followers||[]).length} total follower${(S.users.admin.followers||[]).length!==1?"s":""}`;
+    fw.appendChild(count);
+  } else {
+    fw.innerHTML+=`<p style="color:var(--muted);font-size:13px">No followers yet.</p>`;
+  }
+  rc.appendChild(fw);
+
+  // Recent activity
+  const aw = document.createElement("div"); aw.className="widget";
+  aw.innerHTML=`<h3>Recent Activity</h3>`;
+  const notifs = Object.values(S.notifications["admin"]||{}).sort((a,b)=>b.createdAt-a.createdAt).slice(0,4);
+  if (notifs.length) {
+    const typeEmoji={follow:"👤",like:"❤️",post:"✦",message:"💬"};
+    notifs.forEach(n=>{
+      const row=document.createElement("div"); row.style.cssText="display:flex;gap:8px;align-items:center;margin-bottom:10px";
+      row.innerHTML=`<span style="font-size:16px">${typeEmoji[n.type]||"🔔"}</span><span style="font-size:12px;color:var(--subtle);line-height:1.4">${n.text}</span>`;
+      aw.appendChild(row);
+    });
+  } else {
+    aw.innerHTML+=`<p style="color:var(--muted);font-size:13px">No activity yet.</p>`;
+  }
+  rc.appendChild(aw);
+  container.appendChild(rc);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Notifications
+// ════════════════════════════════════════════════════════════════════════════
+function renderNotifications(el) {
+  // Mark all read
+  const ns = S.notifications[currentUser.id]||{};
+  Object.keys(ns).forEach(k=>ns[k].read=true);
+  S.notifications[currentUser.id]=ns; save();
+  renderShell();
+
+  const notifs = Object.values(ns).sort((a,b)=>b.createdAt-a.createdAt);
+  if (!notifs.length) { const e=document.createElement("div"); e.style.cssText="padding:60px;text-align:center;color:var(--muted)"; e.innerHTML="🔔<br><br>No notifications yet."; el.appendChild(e); return; }
+  const typeEmoji={follow:"👤",like:"❤️",post:"✦",message:"💬"};
+  notifs.forEach(n=>{
+    const row=document.createElement("div");
+    row.className=`notif-item ${n.read?"":"unread"}`;
+    const icon=document.createElement("div"); icon.className="notif-icon"; icon.textContent=typeEmoji[n.type]||"🔔";
+    const text=document.createElement("div"); text.style.flex="1";
+    text.innerHTML=`<p style="margin:0;font-size:14px">${n.text}</p><span style="color:var(--muted);font-size:12px">${timeAgo(n.createdAt)}</span>`;
+    row.append(icon,text);
+    if (!n.read) { const dot=document.createElement("div"); dot.className="unread-dot"; row.appendChild(dot); }
+    el.appendChild(row);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Messages (user DM)
+// ════════════════════════════════════════════════════════════════════════════
+function renderMessages(el) {
+  if (currentUser.role!=="user") {
+    el.innerHTML=`<div style="padding:60px;text-align:center;color:var(--muted)">📬<br><br>Use the <strong style="color:var(--accent)">Shared Inbox</strong> tab to manage messages.</div>`;
+    return;
+  }
+  const admin=S.users.admin;
+  const conv=Object.values(S.conversations[currentUser.id]||{}).sort((a,b)=>a.createdAt-b.createdAt);
+
+  const header=document.createElement("div"); header.className="chat-header";
+  header.appendChild(avatarEl(admin,36));
+  const hi=document.createElement("div");
+  hi.innerHTML=`<div style="font-weight:700;font-size:15px">${admin.displayName}</div><div style="font-size:11px;color:var(--accent)">✦ Creator</div>`;
+  header.appendChild(hi); el.appendChild(header);
+
+  const msgs=document.createElement("div"); msgs.className="chat-messages"; msgs.id="chat-scroll";
+  if (!conv.length) {
+    const emp=document.createElement("div"); emp.style.cssText="padding:40px;text-align:center;color:var(--muted);font-size:14px";
+    emp.textContent=`Start a conversation with ${admin.displayName} ✨`; msgs.appendChild(emp);
+  }
+  conv.forEach(m=>msgs.appendChild(makeBubble(m,currentUser.id)));
+  el.appendChild(msgs);
+
+  const bar=makeChatBar(text=>{
+    const msg={id:`m${Date.now()}`,fromId:currentUser.id,text,createdAt:Date.now(),read:false};
+    if (!S.conversations[currentUser.id]) S.conversations[currentUser.id]={};
+    S.conversations[currentUser.id][msg.id]=msg;
+    S.inbox.push({...msg,userId:currentUser.id});
+    addNotif("admin",{type:"message",fromId:currentUser.id,text:`${currentUser.displayName} sent you a message`});
+    save(); renderContent();
+    setTimeout(()=>{ const s=document.getElementById("chat-scroll"); if(s) s.scrollTop=s.scrollHeight; },50);
+  });
+  el.appendChild(bar);
+  setTimeout(()=>{ const s=document.getElementById("chat-scroll"); if(s) s.scrollTop=s.scrollHeight; },50);
+  el.style.cssText="display:flex;flex-direction:column;flex:1;overflow:hidden";
+}
+
+function makeBubble(m, selfId) {
+  const isMe = m.fromId===selfId;
+  const sender=S.users[m.fromId];
+  const isStaffMsg = sender?.role==="staff"||sender?.role==="admin";
+  const row=document.createElement("div");
+  row.className=`msg-row ${isMe?"me":""}`;
+  const av=avatarEl(sender,28); row.appendChild(av);
+  const bub=document.createElement("div");
+  bub.className=`bubble ${isMe?"me":"them"}`;
+  if (!isMe) {
+    const n=document.createElement("div");
+    n.className=`bubble-name ${isStaffMsg?"staff":""}`;
+    n.textContent=sender?.displayName||"?"; bub.appendChild(n);
+  }
+  const t=document.createElement("p"); t.style.margin="0"; t.textContent=m.text; bub.appendChild(t);
+  const ts=document.createElement("div"); ts.className="bubble-time"; ts.textContent=timeAgo(m.createdAt); bub.appendChild(ts);
+  row.appendChild(bub);
+  return row;
+}
+
+function makeChatBar(onSend) {
+  const bar=document.createElement("div"); bar.className="chat-input-bar";
+  const inp=document.createElement("input"); inp.className="chat-input"; inp.placeholder="Type a message…";
+  const btn=document.createElement("button"); btn.className="btn-send"; btn.innerHTML=svgs.send;
+  const send=()=>{ const t=inp.value.trim(); if(!t) return; inp.value=""; onSend(t); };
+  btn.onclick=send; inp.addEventListener("keydown",e=>e.key==="Enter"&&send());
+  bar.append(inp,btn); return bar;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Shared Inbox
+// ════════════════════════════════════════════════════════════════════════════
+let inboxSelected = null;
+
+function renderInbox(container) {
+  const wrap=document.createElement("div");
+  wrap.style.cssText="display:flex;flex:1;height:100%;overflow:hidden";
+  container.querySelector(".col-center").remove();
+  container.appendChild(wrap);
+
+  // Thread list
+  const list=document.createElement("div"); list.className="thread-list";
+  const listHeader=document.createElement("div");
+  listHeader.style.cssText="padding:14px 16px;font-weight:800;font-size:15px;border-bottom:1px solid var(--border);background:var(--surface)";
+  listHeader.innerHTML=`Inbox <span style="color:var(--muted);font-size:12px;font-weight:400"> · ${currentUser.displayName}</span>`;
+  list.appendChild(listHeader);
+
+  // Group by userId
+  const threads={};
+  S.inbox.forEach(m=>{ if(!threads[m.userId]) threads[m.userId]=[]; threads[m.userId].push(m); });
+  const threadList=Object.entries(threads).sort((a,b)=>Math.max(...b[1].map(m=>m.createdAt))-Math.max(...a[1].map(m=>m.createdAt)));
+
+  if (!threadList.length) {
+    const emp=document.createElement("div"); emp.style.cssText="padding:40px 16px;text-align:center;color:var(--muted);font-size:13px"; emp.textContent="No messages yet."; list.appendChild(emp);
+  }
+
+  threadList.forEach(([uid,msgs])=>{
+    const user=S.users[uid]; if(!user) return;
+    const last=msgs[msgs.length-1];
+    const unread=msgs.filter(m=>!m.replied).length;
+    const item=document.createElement("div");
+    item.className=`thread-item ${inboxSelected===uid?"active":""} ${unread>0?"unread":""}`;
+    item.appendChild(avatarEl(user,40));
+    const info=document.createElement("div"); info.style.cssText="flex:1;min-width:0";
+    info.innerHTML=`
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-weight:700;font-size:13px">${user.displayName}</span>
+        <span style="font-size:11px;color:var(--muted)">${timeAgo(last.createdAt)}</span>
+      </div>
+      <p style="margin:0;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${last.text}</p>
+    `;
+    item.appendChild(info);
+    if (unread>0) { const b=document.createElement("span"); b.className="unread-dot"; b.style.cssText="width:10px;height:10px"; item.appendChild(b); }
+    item.onclick=()=>{ inboxSelected=uid; renderContent(); };
+    list.appendChild(item);
+  });
+  wrap.appendChild(list);
+
+  // Chat pane
+  const pane=document.createElement("div"); pane.className="chat-pane";
+  if (!inboxSelected) {
+    pane.innerHTML=`<div class="empty-chat"><span style="font-size:40px">📬</span><span>Select a conversation</span></div>`;
+  } else {
+    const user=S.users[inboxSelected];
+    const conv=Object.values(S.conversations[inboxSelected]||{}).sort((a,b)=>a.createdAt-b.createdAt);
+    const unread=(threads[inboxSelected]||[]).filter(m=>!m.replied).length;
+
+    const ch=document.createElement("div"); ch.className="chat-header";
+    ch.appendChild(avatarEl(user,36));
+    const ci=document.createElement("div"); ci.style.flex="1";
+    ci.innerHTML=`<div style="font-weight:700;font-size:15px">${user.displayName}</div><div style="font-size:11px;color:var(--muted)">@${user.username}</div>`;
+    ch.appendChild(ci);
+    if (unread>0) { const ub=document.createElement("span"); ub.className="inbox-badge"; ub.textContent=`${unread} new`; ch.appendChild(ub); }
+    pane.appendChild(ch);
+
+    const msgs=document.createElement("div"); msgs.className="chat-messages"; msgs.id="inbox-scroll";
+    conv.forEach(m=>msgs.appendChild(makeBubble(m, inboxSelected)));
+    pane.appendChild(msgs);
+
+    const bar=makeChatBar(text=>{
+      const msg={id:`r${Date.now()}`,fromId:currentUser.id,text,createdAt:Date.now(),read:false};
+      if (!S.conversations[inboxSelected]) S.conversations[inboxSelected]={};
+      S.conversations[inboxSelected][msg.id]=msg;
+      S.inbox=S.inbox.map(m=>m.userId===inboxSelected?{...m,replied:true}:m);
+      addNotif(inboxSelected,{type:"message",fromId:currentUser.id,text:`${currentUser.displayName} replied to your message`});
+      save(); renderContent();
+      setTimeout(()=>{ const s=document.getElementById("inbox-scroll"); if(s) s.scrollTop=s.scrollHeight; },50);
+    });
+    pane.appendChild(bar);
+    setTimeout(()=>{ const s=document.getElementById("inbox-scroll"); if(s) s.scrollTop=s.scrollHeight; },50);
+  }
+  wrap.appendChild(pane);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Profile
+// ════════════════════════════════════════════════════════════════════════════
+function renderProfile(el) {
+  const u=S.users[currentUser.id]||currentUser;
+  const isAdmin=u.role==="admin";
+  const isStaff=u.role==="staff";
+
+  const cover=document.createElement("div"); cover.className="profile-cover";
+  const avWrap=document.createElement("div"); avWrap.className="profile-avatar-wrap";
+  avWrap.appendChild(avatarEl(u,80)); cover.appendChild(avWrap);
+  el.appendChild(cover);
+
+  const info=document.createElement("div"); info.className="profile-info";
+  const topRow=document.createElement("div"); topRow.style.cssText="display:flex;justify-content:space-between;align-items:flex-start;gap:12px";
+  const nameBlock=document.createElement("div");
+  nameBlock.innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <h2 style="font-size:22px;font-weight:800">${u.displayName}</h2>
+      <span class="tag ${isAdmin?"tag-admin":isStaff?"tag-staff":"tag-user"}">${isAdmin?"Creator":isStaff?"Staff":"Member"}</span>
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin:4px 0 0">@${u.username}</p>
+    ${u.bio?`<p style="margin-top:10px;font-size:14px;line-height:1.6;color:#cbd5e1">${u.bio}</p>`:""}
+  `;
+  const lb=document.createElement("button"); lb.className="btn btn-danger btn-sm";
+  lb.innerHTML=`${svgs.logout.replace("16","14")} Sign out`; lb.onclick=logout;
+  topRow.append(nameBlock,lb); info.appendChild(topRow);
+
+  const stats=document.createElement("div"); stats.className="profile-stats";
+  if (isAdmin) {
+    stats.innerHTML=`
+      <div class="stat"><div class="stat-val">${S.posts.length}</div><div class="stat-lbl">Posts</div></div>
+      <div class="stat"><div class="stat-val">${(u.followers||[]).length}</div><div class="stat-lbl">Followers</div></div>
+      <div class="stat"><div class="stat-val">${S.inbox.length}</div><div class="stat-lbl">Messages</div></div>
+    `;
+  } else if (isStaff) {
+    stats.innerHTML=`
+      <div class="stat"><div class="stat-val">${S.inbox.filter(m=>m.replied).length}</div><div class="stat-lbl">Replies sent</div></div>
+      <div class="stat"><div class="stat-val">${S.inbox.filter(m=>!m.replied).length}</div><div class="stat-lbl">Pending</div></div>
+    `;
+  } else {
+    const following=(u.following||[]).length;
+    stats.innerHTML=`
+      <div class="stat"><div class="stat-val">${following}</div><div class="stat-lbl">Following</div></div>
+    `;
+  }
+  info.appendChild(stats); el.appendChild(info);
+
+  const card=document.createElement("div"); card.className="profile-card";
+  if (isAdmin) card.textContent="👑 You have full admin access — post content and manage your platform.";
+  else if (isStaff) card.textContent="🛠 You have staff access — manage the shared inbox and respond to fans on behalf of the team.";
+  else card.textContent="🌟 You're a member. Follow the creator, like posts, and send direct messages.";
+  el.appendChild(card);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Compose Modal
+// ════════════════════════════════════════════════════════════════════════════
+function openComposeModal() {
+  const root=document.getElementById("modal-root");
+  root.innerHTML="";
+  const overlay=document.createElement("div"); overlay.className="modal-overlay";
+  overlay.onclick=e=>{ if(e.target===overlay) root.innerHTML=""; };
+  const box=document.createElement("div"); box.className="modal-box";
+
+  const mh=document.createElement("div"); mh.className="modal-header";
+  mh.innerHTML=`<span class="modal-title">New Post</span>`;
+  const xb=document.createElement("button"); xb.className="btn-icon"; xb.innerHTML=svgs.x;
+  xb.onclick=()=>root.innerHTML=""; mh.appendChild(xb); box.appendChild(mh);
+
+  const ca=document.createElement("div"); ca.className="compose-area";
+  ca.appendChild(avatarEl(currentUser,40));
+  const ta=document.createElement("textarea"); ta.className="compose-textarea";
+  ta.placeholder="Share something with your followers…"; ta.rows=4;
+  ca.appendChild(ta); box.appendChild(ca);
+
+  const submit=document.createElement("button"); submit.className="btn btn-primary btn-full"; submit.style.marginTop="16px"; submit.textContent="Post";
+  submit.onclick=()=>{
+    const text=ta.value.trim(); if(!text) return;
+    const post={id:`p${Date.now()}`,authorId:currentUser.id,content:text,likes:[],createdAt:Date.now()};
+    S.posts.unshift(post);
+    (S.users.admin.followers||[]).forEach(uid=>addNotif(uid,{type:"post",fromId:"admin",text:`${currentUser.displayName} posted something new!`,postId:post.id}));
+    save(); root.innerHTML=""; navigate("home");
+  };
+  box.appendChild(submit);
+  overlay.appendChild(box); root.appendChild(overlay);
+  ta.focus();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Boot
+// ════════════════════════════════════════════════════════════════════════════
+(async () => {
+  await loadState();
+  renderAuth();
+})();
+</script>
+</body>
+</html>
